@@ -21,17 +21,36 @@ app.use(
 );
 
 // 2. Cross-Origin Resource Sharing (CORS) with Credentials
-const allowedOrigins = [
-  process.env.CLIENT_URL || 'http://localhost:5173',
+const baseOrigins = [
+  'http://localhost:5173',
   'http://localhost:3000',
   'http://127.0.0.1:5173'
 ];
 
+const envOrigins = (process.env.CLIENT_URL || '')
+  .split(',')
+  .map((url) => url.trim().replace(/\/$/, ''))
+  .filter(Boolean);
+
+const isOriginAllowed = (origin) => {
+  if (!origin) return true; // Mobile apps, Postman, curl, server-to-server
+  if (baseOrigins.includes(origin)) return true;
+  if (envOrigins.includes(origin)) return true;
+  try {
+    const url = new URL(origin);
+    if (url.hostname.endsWith('.vercel.app') || url.hostname === 'vercel.app') {
+      return true;
+    }
+  } catch {
+    // Malformed origin
+  }
+  return false;
+};
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, or Postman)
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (isOriginAllowed(origin)) {
         return callback(null, true);
       }
       return callback(new Error(`CORS blocked for origin: ${origin}`), false);
