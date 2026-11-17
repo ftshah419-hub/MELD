@@ -1,0 +1,23 @@
+{
+  "name": "meld-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MELD — Bridge Two Worlds: Different Worlds. One Connected Future.",
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "dev:backend": "npm --prefix backend run dev",
+    "start:backend": "npm --prefix backend start",
+    "build": "npm --prefix frontend run build",
+    "preview": "npm --prefix frontend run preview"
+  },
+  "keywords": [
+    "meld",
+    "community",
+    "wisdom-loop",
+    "craft-to-cart",
+    "reconnect",
+    "book-bridge",
+    "second-serve"
+  ],
+  "author": "MELD Engineering Team"
+}
