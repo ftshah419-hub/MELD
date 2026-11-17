@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import bookBridgeService from '../../../services/user/bookBridgeService';
 import ScrollReveal from '../../../components/user/ScrollReveal';
+import PhotoUploadField from '../../../components/user/PhotoUploadField';
 
 const GENRES = ['All', 'Science & Tech', 'Literature & Fiction', 'Competitive Exams', 'Children & Early Learning', 'Philosophy', 'History'];
 const DROPBOX_HUBS = [
@@ -157,7 +158,9 @@ export function BookBridgeHub({ user }) {
     try {
       await bookBridgeService.createBook({
         ...newBook,
-        images: [newBook.coverUrl]
+        images: newBook.coverUrl
+          ? [newBook.coverUrl]
+          : ['https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80']
       });
       setIsListingOpen(false);
       fetchBooks();
@@ -847,6 +850,13 @@ export function BookBridgeHub({ user }) {
                   style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', fontSize: '0.85rem' }}
                 />
               </div>
+
+              <PhotoUploadField
+                label="Book Cover Photograph"
+                value={newBook.coverUrl}
+                onChange={(url) => setNewBook({ ...newBook, coverUrl: url })}
+                folder="meld/books"
+              />
 
               <button
                 type="submit"

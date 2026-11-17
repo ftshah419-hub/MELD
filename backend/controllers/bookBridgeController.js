@@ -128,8 +128,9 @@ export const bookBridgeController = {
       throw ApiError.badRequest('Book title and author are required.');
     }
 
-    const formattedImages = Array.isArray(images) && images.length > 0
-      ? images.map((img) => (typeof img === 'string' ? { url: img, publicId: null } : img))
+    const rawImages = images || (req.body.imageUrl ? [req.body.imageUrl] : null) || (req.body.image ? [req.body.image] : null);
+    const formattedImages = Array.isArray(rawImages) && rawImages.length > 0
+      ? rawImages.map((img) => (typeof img === 'string' ? { url: img, publicId: null } : img))
       : [{ url: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80', publicId: null }];
 
     const book = await BookListing.create({
@@ -206,12 +207,13 @@ export const bookBridgeController = {
   requestBook: asyncHandler(async (req, res) => {
     const requesterId = req.user.id || req.user._id;
     const { bookId, purpose, deliveryMethod, message } = req.body;
+    const targetBookId = bookId || req.params.bookId || req.params.id;
 
-    if (!bookId || !message) {
+    if (!targetBookId || !message) {
       throw ApiError.badRequest('Book ID and request explanation message are required.');
     }
 
-    const book = await BookListing.findById(bookId);
+    const book = await BookListing.findById(targetBookId);
     if (!book) {
       throw ApiError.notFound('Book listing not found.');
     }

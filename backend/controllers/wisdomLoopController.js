@@ -120,13 +120,35 @@ export const wisdomLoopController = {
    */
   requestSession: asyncHandler(async (req, res) => {
     const requesterId = req.user.id || req.user._id;
-    const { mentorId, subject, learningGoals, preferredTimes } = req.body;
+    const {
+      mentorId,
+      id,
+      targetId,
+      subject,
+      topic,
+      learningGoals,
+      notes,
+      questions,
+      preferredTimes,
+      preferredDate,
+      preferredTime
+    } = req.body;
 
-    if (!mentorId || !learningGoals) {
-      throw ApiError.badRequest('Mentor ID and learning goals description are required.');
+    const resolvedMentorId = mentorId || id || targetId;
+    const resolvedGoals = (learningGoals && learningGoals.trim()) ||
+      (notes && notes.trim()) ||
+      (questions && questions.trim()) ||
+      (topic && topic.trim()) ||
+      'General Mentorship Session';
+    const resolvedSubject = subject || topic || '1:1 Mentorship Discussion';
+    const resolvedTiming = preferredTimes ||
+      (preferredDate ? `${preferredDate} at ${preferredTime || 'Flexible'}` : 'Flexible');
+
+    if (!resolvedMentorId) {
+      throw ApiError.badRequest('Mentor ID is required.');
     }
 
-    const mentor = await MentorProfile.findById(mentorId);
+    const mentor = await MentorProfile.findById(resolvedMentorId);
     if (!mentor) {
       throw ApiError.notFound('Selected mentor profile not found.');
     }
@@ -148,7 +170,7 @@ export const wisdomLoopController = {
       throw ApiError.badRequest('You already have an active pending mentorship request with this mentor.');
     }
 
-    const messageContent = `Subject: ${subject || 'General Mentorship'}\nGoals: ${learningGoals}\nPreferred Timing: ${preferredTimes || 'Flexible'}`;
+    const messageContent = `Subject: ${resolvedSubject}\nGoals: ${resolvedGoals}\nPreferred Timing: ${resolvedTiming}`;
 
     const request = await Request.create({
       requesterId,

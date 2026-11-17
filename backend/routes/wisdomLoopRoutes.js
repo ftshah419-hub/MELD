@@ -21,6 +21,7 @@ router.get('/mentors/:id', wisdomLoopController.getMentorById);
 router.post('/requests', authenticate, wisdomLoopController.requestSession);
 router.get('/my-sessions', authenticate, wisdomLoopController.getMySessions);
 router.post('/sessions/:id/feedback', authenticate, wisdomLoopController.submitFeedback);
+router.post('/my-sessions/:id/feedback', authenticate, wisdomLoopController.submitFeedback);
 
 // Mentor onboarding and management
 router.post('/become-mentor', authenticate, wisdomLoopController.becomeMentor);

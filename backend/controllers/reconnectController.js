@@ -139,8 +139,9 @@ export const reconnectController = {
       throw ApiError.badRequest(`Invalid condition. Allowed: ${validConditions.join(', ')}`);
     }
 
-    const formattedImages = Array.isArray(images) && images.length > 0
-      ? images.map((img) => (typeof img === 'string' ? { url: img, publicId: null } : img))
+    const rawImages = images || (req.body.imageUrl ? [req.body.imageUrl] : null) || (req.body.image ? [req.body.image] : null);
+    const formattedImages = Array.isArray(rawImages) && rawImages.length > 0
+      ? rawImages.map((img) => (typeof img === 'string' ? { url: img, publicId: null } : img))
       : [{ url: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=600&q=80', publicId: null }];
 
     const device = await DeviceListing.create({
@@ -219,12 +220,13 @@ export const reconnectController = {
   requestDevice: asyncHandler(async (req, res) => {
     const requesterId = req.user.id || req.user._id;
     const { deviceId, purpose, message } = req.body;
+    const targetDeviceId = deviceId || req.params.deviceId || req.params.id;
 
-    if (!deviceId || !message) {
+    if (!targetDeviceId || !message) {
       throw ApiError.badRequest('Device ID and intended purpose description are required.');
     }
 
-    const device = await DeviceListing.findById(deviceId);
+    const device = await DeviceListing.findById(targetDeviceId);
     if (!device) {
       throw ApiError.notFound('Device listing not found.');
     }

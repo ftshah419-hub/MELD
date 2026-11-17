@@ -552,6 +552,11 @@ export const userController = {
     const userId = req.user.id || req.user._id;
     const { id } = req.params;
 
+    if (id === 'all' || id === 'read-all' || id === 'mark-all') {
+      await Notification.updateMany({ userId, isRead: false }, { isRead: true });
+      return sendResponse(res, 200, 'All notifications marked as read');
+    }
+
     const notification = await Notification.findOneAndUpdate(
       { _id: id, userId },
       { isRead: true },

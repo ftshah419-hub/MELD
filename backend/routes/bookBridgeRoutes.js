@@ -15,6 +15,7 @@ router.delete('/books/:id', authenticate, bookBridgeController.deleteBook);
 router.get('/my-listings', authenticate, bookBridgeController.getMyListings);
 
 router.post('/requests', authenticate, bookBridgeController.requestBook);
+router.post('/books/:bookId/request', authenticate, bookBridgeController.requestBook);
 router.get('/my-requests', authenticate, bookBridgeController.getMyRequests);
 router.get('/incoming-requests', authenticate, bookBridgeController.getIncomingRequests);
 router.patch('/requests/:id/respond', authenticate, bookBridgeController.respondToRequest);

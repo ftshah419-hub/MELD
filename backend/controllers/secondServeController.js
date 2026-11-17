@@ -139,42 +139,93 @@ export const secondServeController = {
     const donorId = req.user.id || req.user._id;
     const {
       title,
+      mealTitle,
+      name,
       foodType,
+      type,
       quantityServings,
+      portions,
+      quantity,
       cookedAt,
       bestBefore,
+      expiresAt,
+      expiresInHours,
       dietaryType,
+      dietary,
+      temperatureType,
       pickupAddress,
-      images
+      location,
+      images,
+      imageUrl,
+      image,
+      safetyNotes
     } = req.body;
 
-    if (!title || !foodType || !quantityServings || !bestBefore) {
-      throw ApiError.badRequest('Title, food type, quantity servings, and best before time are required.');
+    const resolvedTitle = (title || mealTitle || name || '').trim();
+    if (!resolvedTitle) {
+      throw ApiError.badRequest('Meal title is required.');
     }
 
-    const validTypes = ['COOKED_MEALS', 'BAKERY_BREAD', 'RAW_PRODUCE', 'PACKAGED_GOODS'];
-    if (!validTypes.includes(foodType.toUpperCase())) {
-      throw ApiError.badRequest(`Invalid foodType. Allowed: ${validTypes.join(', ')}`);
+    const typeMapping = {
+      'COOKED_MEALS': 'COOKED_MEALS',
+      'COOKED MEALS': 'COOKED_MEALS',
+      'HOT_COOKED': 'COOKED_MEALS',
+      'CHILLED': 'COOKED_MEALS',
+      'AMBIENT': 'PACKAGED_GOODS',
+      'BAKERY_BREAD': 'BAKERY_BREAD',
+      'BAKERY': 'BAKERY_BREAD',
+      'RAW_PRODUCE': 'RAW_PRODUCE',
+      'PRODUCE': 'RAW_PRODUCE',
+      'PACKAGED_GOODS': 'PACKAGED_GOODS',
+      'PACKAGED': 'PACKAGED_GOODS'
+    };
+
+    const rawType = (foodType || type || temperatureType || 'COOKED_MEALS').toUpperCase().replace(/\s+/g, '_');
+    const resolvedFoodType = typeMapping[rawType] || 'COOKED_MEALS';
+
+    const resolvedQuantity = Number(quantityServings || portions || quantity) || 10;
+
+    let expiryDate = null;
+    if (bestBefore) {
+      expiryDate = new Date(bestBefore);
+    } else if (expiresAt) {
+      expiryDate = new Date(expiresAt);
+    } else if (expiresInHours) {
+      expiryDate = new Date(Date.now() + Number(expiresInHours) * 3600000);
+    } else {
+      expiryDate = new Date(Date.now() + 4 * 3600000); // 4 hour default
     }
 
-    const expiryDate = new Date(bestBefore);
     if (isNaN(expiryDate.getTime()) || expiryDate <= new Date()) {
-      throw ApiError.badRequest('bestBefore must be a valid future timestamp.');
+      expiryDate = new Date(Date.now() + 4 * 3600000);
     }
 
-    const formattedImages = Array.isArray(images) && images.length > 0
-      ? images.map((img) => (typeof img === 'string' ? { url: img, publicId: null } : img))
+    const rawDietary = (dietaryType || dietary || 'VEG').toUpperCase();
+    const resolvedDietary = rawDietary.includes('NON') ? 'NON_VEG' : (rawDietary.includes('VEGAN') ? 'VEGAN' : 'VEG');
+
+    let resolvedPickup = pickupAddress;
+    if (!resolvedPickup || typeof resolvedPickup !== 'object') {
+      resolvedPickup = {
+        street: (typeof location === 'string' ? location : (typeof pickupAddress === 'string' ? pickupAddress : 'Main Kitchen')),
+        city: 'Local Area',
+        contactPhone: ''
+      };
+    }
+
+    const rawImages = images || (imageUrl ? [imageUrl] : null) || (image ? [image] : null);
+    const formattedImages = Array.isArray(rawImages) && rawImages.length > 0
+      ? rawImages.map((img) => (typeof img === 'string' ? { url: img, publicId: null } : img))
       : [{ url: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80', publicId: null }];
 
     const donation = await FoodDonation.create({
       donorId,
-      title: title.trim(),
-      foodType: foodType.toUpperCase(),
-      quantityServings: Number(quantityServings),
+      title: resolvedTitle,
+      foodType: resolvedFoodType,
+      quantityServings: resolvedQuantity,
       cookedAt: cookedAt ? new Date(cookedAt) : new Date(),
       bestBefore: expiryDate,
-      dietaryType: dietaryType ? dietaryType.toUpperCase() : 'VEG',
-      pickupAddress: pickupAddress || { street: 'Main Commercial Kitchen', city: 'Metropolis', contactPhone: '' },
+      dietaryType: resolvedDietary,
+      pickupAddress: resolvedPickup,
       images: formattedImages,
       status: 'AVAILABLE'
     });
@@ -252,12 +303,13 @@ export const secondServeController = {
   requestFood: asyncHandler(async (req, res) => {
     const requesterId = req.user.id || req.user._id;
     const { donationId, organizationName, etaMinutes, message } = req.body;
+    const targetDonationId = donationId || req.params.id || req.params.donationId || req.body.id;
 
-    if (!donationId || !message) {
+    if (!targetDonationId || !message) {
       throw ApiError.badRequest('Donation ID and claim message are required.');
     }
 
-    const donation = await FoodDonation.findById(donationId);
+    const donation = await FoodDonation.findById(targetDonationId);
     if (!donation) {
       throw ApiError.notFound('Food donation not found.');
     }
@@ -342,13 +394,14 @@ export const secondServeController = {
   respondToRequest: asyncHandler(async (req, res) => {
     const userId = req.user.id || req.user._id;
     const { id } = req.params;
+    const targetRequestId = id || req.params.claimId || req.body.claimId || req.body.requestId;
     const { action, responseNote } = req.body;
 
     if (!['ACCEPT', 'REJECT'].includes(action)) {
       throw ApiError.badRequest('Action must be ACCEPT or REJECT.');
     }
 
-    const request = await Request.findById(id).populate('targetId');
+    const request = await Request.findById(targetRequestId).populate('targetId');
     if (!request || request.module !== 'SECOND_SERVE') {
       throw ApiError.notFound('Food rescue claim request not found.');
     }

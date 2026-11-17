@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import secondServeService from '../../../services/user/secondServeService';
 import ScrollReveal from '../../../components/user/ScrollReveal';
+import PhotoUploadField from '../../../components/user/PhotoUploadField';
 
 const DIETARY_FILTERS = ['All', 'Vegetarian', 'Vegan', 'Non-Vegetarian', 'Dry Rations'];
 
@@ -177,11 +178,22 @@ export function SecondServeHub({ user }) {
   const handleCreateDonation = async (e) => {
     e.preventDefault();
     try {
-      const expiresAt = new Date(Date.now() + newDonation.expiresInHours * 3600000).toISOString();
+      const expiresAt = new Date(Date.now() + (Number(newDonation.expiresInHours) || 4) * 3600000).toISOString();
       await secondServeService.createDonation({
-        ...newDonation,
+        title: newDonation.title,
+        foodType: 'COOKED_MEALS',
+        quantityServings: Number(newDonation.portions) || 10,
+        bestBefore: expiresAt,
         expiresAt,
-        images: ['https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80']
+        dietaryType: newDonation.dietary === 'Vegetarian' ? 'VEG' : 'NON_VEG',
+        pickupAddress: {
+          street: newDonation.location || 'Indiranagar, Bengaluru',
+          city: 'Bengaluru',
+          contactPhone: ''
+        },
+        images: newDonation.imageUrl
+          ? [newDonation.imageUrl]
+          : ['https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80']
       });
       setIsListingOpen(false);
       fetchDonations();
@@ -964,6 +976,13 @@ export function SecondServeHub({ user }) {
                   style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', fontSize: '0.85rem', resize: 'none' }}
                 />
               </div>
+
+              <PhotoUploadField
+                label="Food Lot Photograph"
+                value={newDonation.imageUrl}
+                onChange={(url) => setNewDonation({ ...newDonation, imageUrl: url })}
+                folder="meld/food"
+              />
 
               <button
                 type="submit"

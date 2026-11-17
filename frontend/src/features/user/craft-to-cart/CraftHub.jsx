@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import craftService from '../../../services/user/craftService';
 import ScrollReveal from '../../../components/user/ScrollReveal';
+import PhotoUploadField from '../../../components/user/PhotoUploadField';
 
 const CRAFT_CATEGORIES = ['All', 'Handloom', 'Pottery', 'Woodwork', 'Metalcraft', 'Natural Fibers', 'Jewelry'];
 
@@ -199,8 +200,11 @@ export function CraftHub({ user, onNavigateOrders }) {
     try {
       await craftService.createProduct({
         ...newProduct,
-        materials: newProduct.materials.split(',').map((s) => s.trim()),
-        images: [newProduct.imageUrl]
+        description: newProduct.artisanStory || newProduct.title,
+        materials: (newProduct.materials || '').split(',').map((s) => s.trim()).filter(Boolean),
+        images: newProduct.imageUrl
+          ? [newProduct.imageUrl]
+          : ['https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=600&q=80']
       });
       setIsListingOpen(false);
       fetchArtisanData();
@@ -1119,6 +1123,13 @@ export function CraftHub({ user, onNavigateOrders }) {
                   style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', fontSize: '0.85rem', resize: 'none' }}
                 />
               </div>
+
+              <PhotoUploadField
+                label="Craft Product Photograph"
+                value={newProduct.imageUrl}
+                onChange={(url) => setNewProduct({ ...newProduct, imageUrl: url })}
+                folder="meld/craft"
+              />
 
               <button
                 type="submit"

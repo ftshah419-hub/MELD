@@ -158,7 +158,13 @@ export function WisdomLoopHub({ user }) {
     try {
       await wisdomLoopService.requestSession({
         mentorId: selectedMentor._id,
-        ...bookingData
+        subject: bookingData.topic,
+        topic: bookingData.topic,
+        learningGoals: bookingData.notes || bookingData.topic || '1:1 Mentorship Session',
+        notes: bookingData.notes,
+        preferredTimes: `${bookingData.preferredDate} at ${bookingData.preferredTime}`,
+        preferredDate: bookingData.preferredDate,
+        preferredTime: bookingData.preferredTime
       });
       setBookingSuccess(true);
       fetchMySessions();

@@ -358,10 +358,13 @@ export const craftController = {
    */
   createProduct: asyncHandler(async (req, res) => {
     const userId = req.user.id || req.user._id;
-    const { title, description, price, stock, category, images } = req.body;
+    const { title, description, artisanStory, provenanceStory, price, stock, category, images, imageUrl, image } = req.body;
 
-    if (!title || !description || !price || !category) {
-      throw ApiError.badRequest('Title, description, price, and category are required.');
+    const resolvedDescription = description || artisanStory || provenanceStory || title;
+    const resolvedCategory = category || 'Handloom';
+
+    if (!title || !resolvedDescription || !price) {
+      throw ApiError.badRequest('Title, description (or story), and price are required.');
     }
 
     if (Number(price) < 1) {
@@ -373,23 +376,29 @@ export const craftController = {
     if (!artisan) {
       artisan = await ArtisanProfile.create({
         userId,
-        craftSpecialty: category,
-        region: 'Local Artisan Hub',
+        craftSpecialty: resolvedCategory,
+        region: req.body.craftOrigin || 'Local Artisan Hub',
         verificationStatus: 'VERIFIED'
       });
     }
 
-    const formattedImages = Array.isArray(images) && images.length > 0
-      ? images.map((img) => (typeof img === 'string' ? { url: img, publicId: null } : img))
+    // Support single imageUrl, image, or images array
+    let rawImages = images;
+    if (!rawImages && (imageUrl || image)) {
+      rawImages = [imageUrl || image];
+    }
+
+    const formattedImages = Array.isArray(rawImages) && rawImages.length > 0
+      ? rawImages.map((img) => (typeof img === 'string' ? { url: img, publicId: null } : img))
       : [{ url: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=600&q=80', publicId: null }];
 
     const product = await Product.create({
       artisanId: userId,
       title: title.trim(),
-      description: description.trim(),
+      description: resolvedDescription.trim(),
       price: Number(price),
       stock: Number(stock) || 1,
-      category: category.trim(),
+      category: resolvedCategory.trim(),
       images: formattedImages,
       status: 'ACTIVE'
     });

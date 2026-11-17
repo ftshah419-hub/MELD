@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import reconnectService from '../../../services/user/reconnectService';
 import ScrollReveal from '../../../components/user/ScrollReveal';
+import PhotoUploadField from '../../../components/user/PhotoUploadField';
 
 const DEVICE_TYPES = ['All', 'Laptop', 'Tablet', 'Smartphone', 'Desktop', 'Accessories'];
 const CONDITIONS = ['All', 'working', 'needs_repair', 'for_parts'];
@@ -156,7 +157,9 @@ export function ReconnectHub({ user }) {
     try {
       await reconnectService.createDevice({
         ...newDevice,
-        images: [newDevice.imageUrl]
+        images: newDevice.imageUrl
+          ? [newDevice.imageUrl]
+          : ['https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=600&q=80']
       });
       setIsListingOpen(false);
       fetchDevices();
@@ -767,6 +770,13 @@ export function ReconnectHub({ user }) {
                   style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', fontSize: '0.85rem' }}
                 />
               </div>
+
+              <PhotoUploadField
+                label="Device Photograph"
+                value={newDevice.imageUrl}
+                onChange={(url) => setNewDevice({ ...newDevice, imageUrl: url })}
+                folder="meld/reconnect"
+              />
 
               <button
                 type="submit"

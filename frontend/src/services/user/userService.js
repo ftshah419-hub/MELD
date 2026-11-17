@@ -53,8 +53,17 @@ export const userService = {
     return apiClient(`/user/notifications${query ? `?${query}` : ''}`);
   },
 
-  markNotificationRead: (notificationId) =>
-    apiClient(`/user/notifications/${notificationId}/read`, {
+  markNotificationRead: (notificationId) => {
+    if (notificationId === 'all' || !notificationId) {
+      return apiClient('/user/notifications/all/read', { method: 'PATCH' });
+    }
+    return apiClient(`/user/notifications/${notificationId}/read`, {
+      method: 'PATCH'
+    });
+  },
+
+  markAllNotificationsRead: () =>
+    apiClient('/user/notifications/all/read', {
       method: 'PATCH'
     })
 };
