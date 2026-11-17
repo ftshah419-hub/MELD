@@ -13,9 +13,11 @@ export const authService = {
   /**
    * Register a new user (always USER role, never admin)
    */
-  async register({ name, email, password }) {
+  async register({ name, fullName, email, password }) {
+    const displayName = (fullName || name || '').trim();
     const payload = {
-      name: name.trim(),
+      fullName: displayName,
+      name: displayName,
       email: email.trim().toLowerCase(),
       password
     };
@@ -26,8 +28,9 @@ export const authService = {
     });
 
     // If backend returns a token upon registration
-    if (response?.token) {
-      setStoredToken(response.token, false);
+    const token = response?.token || response?.data?.token;
+    if (token) {
+      setStoredToken(token, false);
     }
 
     return response;
@@ -48,8 +51,9 @@ export const authService = {
     });
 
     // Save token if returned by backend
-    if (response?.token) {
-      setStoredToken(response.token, rememberMe);
+    const token = response?.token || response?.data?.token;
+    if (token) {
+      setStoredToken(token, rememberMe);
     }
 
     return response;

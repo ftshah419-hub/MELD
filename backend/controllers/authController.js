@@ -11,7 +11,12 @@ export const authController = {
    * Public registrations are strictly assigned USER role
    */
   register: asyncHandler(async (req, res) => {
-    const { fullName, email, password } = req.body;
+    const { fullName, name, email, password } = req.body;
+    const resolvedName = (fullName || name || '').trim();
+
+    if (!resolvedName) {
+      throw ApiError.badRequest('Full name is required.');
+    }
 
     // Check for existing account
     const existingUser = await User.findOne({ email });
@@ -21,7 +26,7 @@ export const authController = {
 
     // Always enforce USER role for public registration
     const newUser = await User.create({
-      fullName,
+      fullName: resolvedName,
       email,
       passwordHash: password,
       role: 'USER',
@@ -54,9 +59,15 @@ export const authController = {
 
     const safeUser = newUser.toSafeObject();
 
-    return sendResponse(res, 201, 'User account registered successfully', {
+    return res.status(201).json({
+      success: true,
+      message: 'User account registered successfully',
+      token,
       user: safeUser,
-      token
+      data: {
+        user: safeUser,
+        token
+      }
     });
   }),
 
@@ -114,9 +125,15 @@ export const authController = {
 
     const safeUser = user.toSafeObject();
 
-    return sendResponse(res, 200, 'Login successful', {
+    return res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      token,
       user: safeUser,
-      token
+      data: {
+        user: safeUser,
+        token
+      }
     });
   }),
 
@@ -126,13 +143,23 @@ export const authController = {
    */
   getCurrentUser: asyncHandler(async (req, res) => {
     if (!req.user) {
-      return sendResponse(res, 200, 'No active session', {
-        user: null
+      return res.status(200).json({
+        success: true,
+        message: 'No active session',
+        user: null,
+        data: {
+          user: null
+        }
       });
     }
 
-    return sendResponse(res, 200, 'User session verified', {
-      user: req.user
+    return res.status(200).json({
+      success: true,
+      message: 'User session verified',
+      user: req.user,
+      data: {
+        user: req.user
+      }
     });
   }),
 

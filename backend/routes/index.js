@@ -2,6 +2,7 @@ import { Router } from 'express';
 import authRoutes from './authRoutes.js';
 import paymentRoutes from './paymentRoutes.js';
 import uploadRoutes from './uploadRoutes.js';
+import adminRoutes from './adminRoutes.js';
 import { authenticate } from '../middleware/authMiddleware.js';
 import { authorizeRoles } from '../middleware/roleMiddleware.js';
 
@@ -54,16 +55,7 @@ router.use('/second-serve', createUserModulePlaceholder('Second Serve Food Rescu
 // PERSON 3: ADMIN MODULE INTEGRATION HOOKS
 // ==========================================
 
-const adminPlaceholder = Router();
-adminPlaceholder.use((req, res) => {
-  res.status(501).json({
-    success: false,
-    message: 'Admin Dashboard APIs are pending Person 3 integration. Drop routes in backend/routes/adminRoutes.js.',
-    owner: 'Person 3 — Admin Backend'
-  });
-});
-
 // Admin routes guarded by authenticate and authorizeRoles('ADMIN')
-router.use('/admin', authenticate, authorizeRoles('ADMIN'), adminPlaceholder);
+router.use('/admin', authenticate, authorizeRoles('ADMIN'), adminRoutes);
 
 export default router;
