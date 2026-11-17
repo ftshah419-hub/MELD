@@ -3,10 +3,12 @@
  * Enforces unified response structure across the entire MELD platform
  */
 export const sendResponse = (res, statusCode = 200, message = 'Success', data = null) => {
+  const extra = data && typeof data === 'object' && !Array.isArray(data) ? data : {};
   return res.status(statusCode).json({
     success: true,
     message,
-    data
+    data,
+    ...extra
   });
 };
 

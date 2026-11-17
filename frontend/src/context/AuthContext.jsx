@@ -55,7 +55,6 @@ export function AuthProvider({ children }) {
         response?.data?.user ||
         (response?.data?.role ? response.data : null) ||
         (response?.role ? response : null);
-
       if (!authenticatedUser || !authenticatedUser.role) {
         throw new Error('Invalid authentication response structure received from server.');
       }

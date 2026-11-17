@@ -6,6 +6,14 @@ import adminRoutes from './adminRoutes.js';
 import { authenticate } from '../middleware/authMiddleware.js';
 import { authorizeRoles } from '../middleware/roleMiddleware.js';
 
+// Person 2: User Module Routes
+import userRoutes from './userRoutes.js';
+import wisdomLoopRoutes from './wisdomLoopRoutes.js';
+import craftRoutes from './craftRoutes.js';
+import reconnectRoutes from './reconnectRoutes.js';
+import bookBridgeRoutes from './bookBridgeRoutes.js';
+import secondServeRoutes from './secondServeRoutes.js';
+
 const router = Router();
 
 // ==========================================
@@ -30,26 +38,13 @@ router.get('/health', (req, res) => {
 // PERSON 2: USER MODULE INTEGRATION HOOKS
 // ==========================================
 
-// Helper placeholder router for Person 2
-const createUserModulePlaceholder = (moduleName, filename) => {
-  const stub = Router();
-  stub.use((req, res) => {
-    res.status(501).json({
-      success: false,
-      message: `${moduleName} is pending Person 2 integration. Drop routes in backend/routes/${filename}.`,
-      owner: 'Person 2 — User Backend'
-    });
-  });
-  return stub;
-};
-
 // Integration mounting points for Person 2
-router.use('/user', authenticate, createUserModulePlaceholder('User Dashboard & Profile APIs', 'userRoutes.js'));
-router.use('/wisdom-loop', createUserModulePlaceholder('Wisdom Loop Mentorship Module', 'wisdomLoopRoutes.js'));
-router.use('/craft', createUserModulePlaceholder('Craft to Cart Marketplace Module', 'craftRoutes.js'));
-router.use('/reconnect', createUserModulePlaceholder('ReConnect Electronics Reuse Module', 'reconnectRoutes.js'));
-router.use('/book-bridge', createUserModulePlaceholder('Book Bridge Library Module', 'bookBridgeRoutes.js'));
-router.use('/second-serve', createUserModulePlaceholder('Second Serve Food Rescue Module', 'secondServeRoutes.js'));
+router.use('/user', authenticate, userRoutes);
+router.use('/wisdom-loop', wisdomLoopRoutes);
+router.use('/craft', craftRoutes);
+router.use('/reconnect', reconnectRoutes);
+router.use('/book-bridge', bookBridgeRoutes);
+router.use('/second-serve', secondServeRoutes);
 
 // ==========================================
 // PERSON 3: ADMIN MODULE INTEGRATION HOOKS
