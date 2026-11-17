@@ -50,7 +50,7 @@ export function AuthProvider({ children }) {
     try {
       const response = await authService.login({ email, password, rememberMe });
       
-      const authenticatedUser = response.user || response.data || response;
+      const authenticatedUser = response?.user || response?.data?.user || response?.data || response;
       if (!authenticatedUser || !authenticatedUser.role) {
         throw new Error('Invalid authentication response structure received from server.');
       }
@@ -77,8 +77,8 @@ export function AuthProvider({ children }) {
       const response = await authService.register({ name, email, password });
       
       // If backend logs in immediately upon register
-      if (response?.user || response?.token) {
-        const authenticatedUser = response.user || response;
+      if (response?.user || response?.data?.user || response?.token || response?.data?.token) {
+        const authenticatedUser = response?.user || response?.data?.user || response;
         setUser(authenticatedUser);
         setIsAuthenticated(true);
         return authenticatedUser;

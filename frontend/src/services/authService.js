@@ -26,8 +26,9 @@ export const authService = {
     });
 
     // If backend returns a token upon registration
-    if (response?.token) {
-      setStoredToken(response.token, false);
+    const token = response?.token || response?.data?.token;
+    if (token) {
+      setStoredToken(token, false);
     }
 
     return response;
@@ -48,8 +49,9 @@ export const authService = {
     });
 
     // Save token if returned by backend
-    if (response?.token) {
-      setStoredToken(response.token, rememberMe);
+    const token = response?.token || response?.data?.token;
+    if (token) {
+      setStoredToken(token, rememberMe);
     }
 
     return response;
