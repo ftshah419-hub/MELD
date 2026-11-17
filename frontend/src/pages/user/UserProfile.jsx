@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import userService from '../../services/user/userService';
 import ScrollReveal from '../../components/user/ScrollReveal';
+import PhotoUploadField from '../../components/user/PhotoUploadField';
 
 export function UserProfile({ user }) {
   const [profile, setProfile] = useState({
@@ -19,6 +20,7 @@ export function UserProfile({ user }) {
     email: user?.email || '',
     phone: '',
     bio: '',
+    profileImage: user?.profileImage?.url || user?.profileImage || '',
     address: {
       street: '',
       city: '',
@@ -45,6 +47,7 @@ export function UserProfile({ user }) {
           email: res.user.email || '',
           phone: res.user.phone || '',
           bio: res.user.bio || '',
+          profileImage: res.user.profileImage?.url || res.user.profileImage || '',
           address: {
             street: res.user.address?.street || '',
             city: res.user.address?.city || '',
@@ -59,7 +62,8 @@ export function UserProfile({ user }) {
         setProfile((prev) => ({
           ...prev,
           name: user.name || '',
-          email: user.email || ''
+          email: user.email || '',
+          profileImage: user.profileImage?.url || user.profileImage || ''
         }));
       }
     } finally {
@@ -69,9 +73,10 @@ export function UserProfile({ user }) {
 
   const calculateCompletion = () => {
     let score = 25; // Email registered
-    if (profile.name) score += 25;
-    if (profile.phone) score += 20;
+    if (profile.name) score += 20;
+    if (profile.phone) score += 15;
     if (profile.bio) score += 15;
+    if (profile.profileImage) score += 10;
     if (profile.address?.city && profile.address?.pincode) score += 15;
     return Math.min(score, 100);
   };
@@ -87,6 +92,7 @@ export function UserProfile({ user }) {
         name: profile.name,
         phone: profile.phone,
         bio: profile.bio,
+        profileImage: profile.profileImage,
         address: profile.address
       });
       setSavedSuccess(true);
@@ -159,22 +165,37 @@ export function UserProfile({ user }) {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-            <div
-              style={{
-                width: '54px',
-                height: '54px',
-                borderRadius: '50%',
-                backgroundColor: 'var(--primary)',
-                color: '#fff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 800,
-                fontSize: '1.35rem'
-              }}
-            >
-              {profile.name?.charAt(0).toUpperCase() || 'U'}
-            </div>
+            {profile.profileImage ? (
+              <img
+                src={profile.profileImage}
+                alt={profile.name || 'User Avatar'}
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: '2px solid var(--primary)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: '54px',
+                  height: '54px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--primary)',
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 800,
+                  fontSize: '1.35rem'
+                }}
+              >
+                {profile.name?.charAt(0).toUpperCase() || 'U'}
+              </div>
+            )}
             <div>
               <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.35rem', fontWeight: 800, margin: '0 0 0.2rem' }}>
                 Account & Impact Profile
@@ -313,6 +334,17 @@ export function UserProfile({ user }) {
                   style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', fontSize: '0.875rem' }}
                 />
               </div>
+            </div>
+
+            {/* Profile Avatar / Photo Field */}
+            <div style={{ marginBottom: '1.25rem' }}>
+              <PhotoUploadField
+                label="Profile Picture / Avatar"
+                value={profile.profileImage}
+                onChange={(url) => setProfile((prev) => ({ ...prev, profileImage: url }))}
+                moduleColor="var(--primary)"
+                helpText="Upload a professional headshot or profile photo (JPEG, PNG, WebP up to 5MB)."
+              />
             </div>
 
             <div style={{ marginBottom: '1.5rem' }}>

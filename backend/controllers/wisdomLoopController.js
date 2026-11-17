@@ -254,9 +254,9 @@ export const wisdomLoopController = {
     const userId = req.user.id || req.user._id;
     const { title, expertise, expertiseAreas, yearsExperience, yearsOfExperience, bio, availability } = req.body;
 
-    const rawBio = bio || req.body.statement;
+    const rawBio = bio || req.body.statement || req.body.biography || req.body.mentorBio || req.body.description || '';
     if (!rawBio || !rawBio.trim()) {
-      throw ApiError.badRequest('Mentor biography is required.');
+      throw ApiError.badRequest('Mentor biography and statement of intent are required.');
     }
 
     const rawExpertise = expertiseAreas || expertise || [];

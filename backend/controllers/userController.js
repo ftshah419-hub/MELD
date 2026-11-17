@@ -60,15 +60,16 @@ export const userController = {
    */
   updateProfile: asyncHandler(async (req, res) => {
     const userId = req.user.id || req.user._id;
-    const { fullName, phone, bio, profileImage } = req.body;
+    const { fullName, name, phone, bio, profileImage, imageUrl, address } = req.body;
 
     const user = await User.findById(userId);
     if (!user) {
       throw ApiError.notFound('User not found.');
     }
 
-    if (fullName && fullName.trim().length >= 2) {
-      user.fullName = fullName.trim();
+    const resolvedName = fullName || name;
+    if (resolvedName && resolvedName.trim().length >= 2) {
+      user.fullName = resolvedName.trim();
     }
     if (phone !== undefined) {
       user.phone = phone ? phone.trim() : null;
@@ -76,11 +77,20 @@ export const userController = {
     if (bio !== undefined) {
       user.bio = bio ? bio.trim() : '';
     }
-    if (profileImage && typeof profileImage === 'object' && profileImage.url) {
-      user.profileImage = {
-        url: profileImage.url,
-        publicId: profileImage.publicId || null
-      };
+
+    const rawImg = profileImage || imageUrl || req.body.image;
+    if (rawImg) {
+      if (typeof rawImg === 'string' && rawImg.trim()) {
+        user.profileImage = {
+          url: rawImg.trim(),
+          publicId: null
+        };
+      } else if (typeof rawImg === 'object' && rawImg.url) {
+        user.profileImage = {
+          url: rawImg.url,
+          publicId: rawImg.publicId || null
+        };
+      }
     }
 
     await user.save();
@@ -396,31 +406,24 @@ export const userController = {
     const userId = req.user.id || req.user._id;
     const { module: rawModule, amount, message, anonymous } = req.body;
 
-    if (!rawModule || !amount || Number(amount) < 1) {
-      throw ApiError.badRequest('Valid module and contribution amount (min 1 INR) are required.');
+    if (!amount || Number(amount) < 1) {
+      throw ApiError.badRequest('Contribution amount must be at least 1 INR.');
     }
 
-    const moduleMap = {
-      'all': 'WISDOM_LOOP',
-      'ALL': 'WISDOM_LOOP',
-      'general': 'WISDOM_LOOP',
-      'wisdom-loop': 'WISDOM_LOOP',
-      'craft-to-cart': 'CRAFT_TO_CART',
-      'reconnect': 'RECONNECT',
-      'book-bridge': 'BOOK_BRIDGE',
-      'second-serve': 'SECOND_SERVE',
-      'WISDOM_LOOP': 'WISDOM_LOOP',
-      'CRAFT_TO_CART': 'CRAFT_TO_CART',
-      'RECONNECT': 'RECONNECT',
-      'BOOK_BRIDGE': 'BOOK_BRIDGE',
-      'SECOND_SERVE': 'SECOND_SERVE'
-    };
+    const normalized = String(rawModule || '').toLowerCase().trim();
+    let targetModule = 'WISDOM_LOOP';
 
-    const targetModule = moduleMap[rawModule] || moduleMap[rawModule.toLowerCase?.()] || rawModule.toUpperCase().replace(/-/g, '_');
-
-    const validModules = ['WISDOM_LOOP', 'CRAFT_TO_CART', 'RECONNECT', 'BOOK_BRIDGE', 'SECOND_SERVE'];
-    if (!validModules.includes(targetModule)) {
-      throw ApiError.badRequest(`Invalid module. Allowed: ${validModules.join(', ')}`);
+    if (normalized.includes('craft') || normalized.includes('artisan')) {
+      targetModule = 'CRAFT_TO_CART';
+    } else if (normalized.includes('connect') || normalized.includes('device') || normalized.includes('reconnect')) {
+      targetModule = 'RECONNECT';
+    } else if (normalized.includes('book') || normalized.includes('bridge') || normalized.includes('library')) {
+      targetModule = 'BOOK_BRIDGE';
+    } else if (normalized.includes('second') || normalized.includes('serve') || normalized.includes('food')) {
+      targetModule = 'SECOND_SERVE';
+    } else {
+      // General Impact Fund, all, wisdom-loop, or unspecified
+      targetModule = 'WISDOM_LOOP';
     }
 
     // 1. Create internal Contribution record in PENDING state
